@@ -40,6 +40,7 @@ Desktop.ini
 # Local data (sample fixtures under tests/ may be added later and tracked explicitly)
 data/raw/
 data/local/
+data/downloads/
 *.parquet
 *.duckdb
 *.db

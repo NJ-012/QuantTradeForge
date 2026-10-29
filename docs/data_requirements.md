@@ -127,6 +127,24 @@ Timestamped trades or prices, best bid/ask, volume, trading status, market depth
 | Trading halt | Status field if available; do not invent prints |
 | Halt / auction / special session | Separate from regular continuous session bars |
 
+## Exploratory source evaluation
+
+The repository now includes a bounded NSE daily bhavcopy adapter in
+`quanttradeforge.data.nse`. A single 30 October 2023 archive was downloaded
+locally under `data/local/nse_bhavcopy_2023-10-30/` for parser and persistence
+verification. The local sample is ignored by git and is **not** a licensed
+redistribution artefact.
+
+This source is useful for validating the daily schema and NSE identifier
+mapping, but it does not satisfy the initial 5-minute/15-minute research
+requirement. Its archive terms, permitted long-term storage, and
+redistribution rights still require explicit review before production or
+shared-dataset use. The adapter marks the manifest `not_for_performance=true`
+and leaves prices unadjusted.
+
+Yahoo Finance was not selected: its current terms prohibit automated
+collection without express permission and restrict reuse of data and APIs.
+
 ## Feasible source evaluation (checklist, not a ranking)
 
 Evaluate each candidate against **primary** docs/licence before any integration:

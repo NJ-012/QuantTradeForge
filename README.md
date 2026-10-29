@@ -16,13 +16,15 @@ Status vocabulary used in this repo: **Planned**, **In progress**, **Implemented
 
 See [docs/roadmap.md](docs/roadmap.md).
 
-## What exists after Phase 1.2
+## What exists after Phase 1.3 work in progress
 
 - Architecture, decisions, data requirements, and schema notes under `docs/`
 - `quanttradeforge.data`: instrument/bar/CA models and quality checks
 - Labelled **synthetic** JSON fixtures (not market data, not for performance)
 - Preserved TSMOM v0.1 **research specification** (not implemented, not backtested)
-- No market-data download, no broker adapters, no ML models
+- NSE daily bhavcopy adapter and one local exploratory sample (not committed,
+  not for performance, and not sufficient for intraday research)
+- No intraday market-data download, no broker adapters, no ML models
 
 ## Setup
 
@@ -31,6 +33,15 @@ Python 3.11+ is the intended research language. **No third-party packages are re
 ```text
 python -m unittest discover -s tests -v
 ```
+
+To reproduce the bounded NSE sample download (requires network access):
+
+```text
+python -m scripts.download_nse_bhavcopy --date 2023-10-30 --output data/local/nse_bhavcopy_2023-10-30
+```
+
+The output is intentionally ignored by git. Review the source terms before
+sharing or using it for research claims.
 
 Do not install NumPy, Polars, databases, or ML libraries until a later phase needs them.
 
