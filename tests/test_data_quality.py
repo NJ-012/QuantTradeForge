@@ -8,8 +8,8 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from quanttradeforge.data.enums import InstrumentType, IssueSeverity, Timeframe, TradingStatus
-from quanttradeforge.data.models import Bar, Instrument
-from quanttradeforge.data.quality import sort_bars, validate_bar, validate_bar_series
+from quanttradeforge.data.models import Bar, DatasetManifest, Instrument
+from quanttradeforge.data.quality import sort_bars, validate_bar, validate_bar_series, validate_dataset
 from quanttradeforge.data.session import session_bar_opens
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -52,6 +52,43 @@ def _codes(issues) -> set[str]:
 
 
 class QualityTests(unittest.TestCase):
+    def test_dataset_cross_file_identity(self) -> None:
+        manifest = DatasetManifest(
+            dataset_id="sample",
+            dataset_version="v1",
+            source="test",
+            license="test",
+            is_synthetic=True,
+            not_for_performance=True,
+            adjustment_policy="unadjusted",
+            bar_time_convention="period_start",
+            timezone="Asia/Kolkata",
+        )
+        issues = validate_dataset(
+            manifest,
+            [_instrument()],
+            [_bar(minute=15, dataset_version="v1")],
+        )
+        self.assertNotIn("DATASET_VERSION_MISMATCH", _codes(issues))
+        self.assertNotIn("UNKNOWN_INSTRUMENT", _codes(issues))
+
+    def test_dataset_flags_unknown_instrument_and_version(self) -> None:
+        manifest = DatasetManifest(
+            dataset_id="sample",
+            dataset_version="v1",
+            source="test",
+            license="test",
+            is_synthetic=True,
+            not_for_performance=True,
+            adjustment_policy="unadjusted",
+            bar_time_convention="period_start",
+            timezone="Asia/Kolkata",
+        )
+        bar = _bar(minute=15, instrument_id="QTF:NSE:EQ:UNKNOWN", dataset_version="v2")
+        codes = _codes(validate_dataset(manifest, [_instrument()], [bar]))
+        self.assertIn("DATASET_VERSION_MISMATCH", codes)
+        self.assertIn("UNKNOWN_INSTRUMENT", codes)
+
     def test_ohlc_inconsistency(self) -> None:
         bar = _bar(minute=15, high=Decimal("99.00"), low=Decimal("98.00"), open=Decimal("100.00"))
         codes = _codes(validate_bar(bar))

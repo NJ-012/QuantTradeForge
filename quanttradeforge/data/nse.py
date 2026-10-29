@@ -14,8 +14,9 @@ import urllib.request
 import zipfile
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from quanttradeforge.data.enums import (
@@ -36,6 +37,10 @@ class NSEBhavcopyDataset:
     manifest: DatasetManifest
     instruments: list[Instrument]
     bars: list[Bar]
+
+
+def _read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def bhavcopy_url(session_date: date) -> str:
@@ -61,6 +66,21 @@ def _read_csv_from_zip(payload: bytes) -> list[dict[str, str]]:
         raise ValueError("NSE response is not a valid ZIP archive") from exc
 
 
+def _decimal_field(row: dict[str, str], field: str, row_number: int) -> Decimal:
+    value = (row.get(field) or "").strip()
+    if not value:
+        raise ValueError(f"NSE EQ row {row_number} has an empty {field} field")
+    try:
+        parsed = Decimal(value)
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(
+            f"NSE EQ row {row_number} has invalid {field}: {value!r}"
+        ) from exc
+    if not parsed.is_finite():
+        raise ValueError(f"NSE EQ row {row_number} has non-finite {field}: {value!r}")
+    return parsed
+
+
 def parse_bhavcopy(
     payload: bytes,
     *,
@@ -82,12 +102,16 @@ def parse_bhavcopy(
     bar_ts = datetime.combine(session_date, datetime.min.time(), tzinfo=IST).replace(
         hour=9, minute=15
     )
-    for row in rows:
-        if row["SERIES"].strip().upper() != "EQ":
+    seen_symbols: set[str] = set()
+    for row_number, row in enumerate(rows, start=2):
+        if (row.get("SERIES") or "").strip().upper() != "EQ":
             continue
-        symbol = row["SYMBOL"].strip()
+        symbol = (row.get("SYMBOL") or "").strip()
         if not symbol:
-            continue
+            raise ValueError(f"NSE EQ row {row_number} has an empty SYMBOL field")
+        if symbol in seen_symbols:
+            raise ValueError(f"NSE bhavcopy contains duplicate EQ symbol: {symbol}")
+        seen_symbols.add(symbol)
         instrument_id = f"QTF:NSE:EQ:{symbol}"
         instruments.append(
             Instrument(
@@ -106,16 +130,16 @@ def parse_bhavcopy(
                 instrument_id=instrument_id,
                 bar_open_ts=bar_ts,
                 timeframe=Timeframe.D1,
-                open=Decimal(row["OPEN"]),
-                high=Decimal(row["HIGH"]),
-                low=Decimal(row["LOW"]),
-                close=Decimal(row["CLOSE"]),
-                volume=Decimal(row["TOTTRDQTY"]),
+                open=_decimal_field(row, "OPEN", row_number),
+                high=_decimal_field(row, "HIGH", row_number),
+                low=_decimal_field(row, "LOW", row_number),
+                close=_decimal_field(row, "CLOSE", row_number),
+                volume=_decimal_field(row, "TOTTRDQTY", row_number),
                 session_date=session_date,
                 dataset_version=dataset_version,
                 turnover=(
-                    Decimal(row["TOTTRDVAL"])
-                    if row.get("TOTTRDVAL")
+                    _decimal_field(row, "TOTTRDVAL", row_number)
+                    if (row.get("TOTTRDVAL") or "").strip()
                     else None
                 ),
                 source=NSE_BHAVCOPY_SOURCE,
@@ -174,4 +198,25 @@ def write_dataset(dataset: NSEBhavcopyDataset, output_dir: Path) -> None:
     )
     (output_dir / "bars_1d.json").write_text(
         json.dumps([bar.__dict__ for bar in dataset.bars], default=str, indent=2) + "\n"
+    )
+
+
+def load_dataset(output_dir: Path) -> NSEBhavcopyDataset:
+    """Load a dataset written by :func:`write_dataset`."""
+    manifest_path = output_dir / "dataset.json"
+    instruments_path = output_dir / "instruments.json"
+    bars_path = output_dir / "bars_1d.json"
+    missing = [
+        str(path.name)
+        for path in (manifest_path, instruments_path, bars_path)
+        if not path.is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            f"dataset directory is missing required files: {', '.join(missing)}"
+        )
+    return NSEBhavcopyDataset(
+        manifest=DatasetManifest.from_dict(_read_json(manifest_path)),
+        instruments=[Instrument.from_dict(item) for item in _read_json(instruments_path)],
+        bars=[Bar.from_dict(item) for item in _read_json(bars_path)],
     )
