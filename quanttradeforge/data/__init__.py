@@ -1,4 +1,4 @@
-"""Market-data contracts: instruments, bars, quality checks, synthetic fixtures."""
+"""Market-data contracts, quality checks, fixtures, and bounded source adapters."""
 
 from quanttradeforge.data.enums import (
     AdjustmentPolicy,
@@ -10,6 +10,7 @@ from quanttradeforge.data.enums import (
     TradingStatus,
 )
 from quanttradeforge.data.models import Bar, CorporateAction, DatasetManifest, Instrument
+from quanttradeforge.data.nse import NSEBhavcopyDataset, bhavcopy_url, download_bhavcopy, parse_bhavcopy, write_dataset
 from quanttradeforge.data.quality import QualityIssue, validate_bar, validate_bar_series, validate_instrument
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "DatasetManifest",
     "Instrument",
     "InstrumentType",
+    "NSEBhavcopyDataset",
     "IssueSeverity",
     "QualityIssue",
     "Timeframe",
@@ -28,4 +30,8 @@ __all__ = [
     "validate_bar",
     "validate_bar_series",
     "validate_instrument",
+    "bhavcopy_url",
+    "download_bhavcopy",
+    "parse_bhavcopy",
+    "write_dataset",
 ]

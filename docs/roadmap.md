@@ -31,7 +31,7 @@ Includes market scope, trading style, risk philosophy, strategy-library goals, A
 | --------- | ------ | ------ |
 | 1.1 Data requirements and source evaluation | Requirements, licensing questions, no bulk download | **Implemented** (docs) and **Tested** (`tests/test_phase11_docs.py`). Not a data-vendor validation. |
 | 1.2 Schemas, quality rules, small sample fixtures | Contracts before scale | **Implemented** and **Tested** (`quanttradeforge.data`, synthetic fixtures). Sample is synthetic — not **Validated** market data. |
-| 1.3 Ingestion adapters and storage for approved sample | After source approval (OPEN-001) | Planned |
+| 1.3 Ingestion adapters and storage for approved sample | Bounded NSE daily adapter and local sample; intraday source still open | **In progress** |
 
 **Phase 1 completion criteria (not yet met):**
 
@@ -42,6 +42,16 @@ Includes market scope, trading style, risk philosophy, strategy-library goals, A
 - Reproducible historical storage for a **small** sample
 - Timestamp/timezone and corporate-action policy recorded
 - No large unpaid/unlicensed dataset in the repo
+
+### Phase 1.3 progress
+
+- Implemented: official NSE daily bhavcopy URL construction and ZIP/CSV parsing.
+- Implemented: normalized NSE EQ instruments and daily bars with source metadata.
+- Implemented: local JSON persistence that refuses accidental overwrite.
+- Downloaded locally: one 30 October 2023 NSE daily sample; it is ignored by git
+  and marked not-for-performance.
+- Outstanding: primary-document licensing review, 5-minute/15-minute source,
+  corporate-action ingestion, and versioned multi-file storage acceptance.
 
 **Not complete** when this file exists.
 
@@ -87,6 +97,6 @@ Futures, options, other markets, specialized latency infrastructure — when jus
 
 ## Next authorized task after 1.2
 
-Phase 1.3: ingestion adapters behind an interface for an **approved** source, plus persistence of a small licensed or explicitly allowed sample. Blocked on OPEN-001 (and useful input on OPEN-003). Do not begin Phase 2 unless Phase 1 completion criteria are met or you explicitly authorize a scoped exception.
+Phase 1.3: ingestion adapters behind an interface for an **approved** source, plus persistence of a small licensed or explicitly allowed sample. A bounded NSE daily engineering sample is now available locally, but OPEN-001 remains open for reuse rights and an intraday source. Do not begin Phase 2 unless Phase 1 completion criteria are met or you explicitly authorize a scoped exception.
 
 Phase 1 is still **not complete**: no vendor evaluation from primary docs, no real historical storage.
