@@ -10,7 +10,8 @@ This is **not** a live trading bot. Live order submission is forbidden unless yo
 | ----- | ------ |
 | 0 System definition | Recorded in `docs/` (planning-level; not a running system) |
 | 1 Market data infrastructure | **In progress** — 1.1–1.2 implemented/tested; 1.3 daily NSE adapter and local sample implemented/tested |
-| 2+ Strategies, backtest, ML, risk, execution | Planned — not started |
+| 2 Strategy contracts | **In progress** — common signal contract and TSMOM configuration boundary added |
+| 3+ Backtest, ML, risk, execution | Planned — not started |
 
 Status vocabulary used in this repo: **Planned**, **In progress**, **Implemented**, **Tested**, **Validated**, **Approved for deployment**. These are not interchangeable. Passing a documentation test is not validation of a strategy.
 
@@ -26,6 +27,7 @@ See [docs/roadmap.md](docs/roadmap.md).
   sample (not committed, not for performance, and not sufficient for intraday research)
 - Cross-file dataset validation for manifest, instrument, and bar identity
 - Parser safeguards that reject malformed numeric fields and duplicate EQ symbols
+- Phase 2 strategy contracts and an explicit unresolved-decision boundary for TSMOM v0.1
 - No intraday market-data download, no broker adapters, no ML models
 
 ## Setup
@@ -58,6 +60,10 @@ integrity errors are found.
 The current sample is daily only. It does not satisfy the required 5-minute
 and 15-minute intraday data requirements. Do not install NumPy, Polars,
 databases, or ML libraries until a later phase needs them.
+
+Phase 2 currently contains contracts only. TSMOM signal generation and
+backtesting are not implemented or validated. See
+[docs/strategy_interface.md](docs/strategy_interface.md).
 
 ## Configuration and secrets
 
