@@ -70,9 +70,11 @@ Common strategy interface; preserve TSMOM v0.1; additional strategies only with 
   contracts with explicit position semantics.
 - Implemented: TSMOM v0.1 configuration boundary that refuses unresolved
   specification decisions.
+- Implemented: initial completed-bar TSMOM entry/hold evaluator for explicitly
+  selected momentum and volatility conventions.
 - Outstanding: resolve TSMOM decisions, implement the strategy, add
-  chronological signal tests, and backtest only after suitable intraday data
-  is approved.
+  stop/target/exit handling, and backtest only after suitable intraday data is
+  approved.
 
 ## Phase 3 — Backtesting and validation
 

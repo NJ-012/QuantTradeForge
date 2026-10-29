@@ -17,3 +17,10 @@ position intent.
 previously unresolved decisions to be supplied before a future implementation
 can use the configuration. TSMOM signal generation is not implemented,
 backtested, validated, or approved for deployment.
+
+The initial evaluator now supports the explicitly configured
+`simple_close_to_close` formula and `volatility_ddof` of 0 or 1. It evaluates
+only the completed bars supplied to it, requires chronological single-instrument
+5-minute data, emits `ENTER` or `HOLD`, and refuses unresolved configurations.
+Stop/target distances, reversal exits, end-of-day handling, and execution are
+not yet implemented.

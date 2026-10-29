@@ -6,7 +6,7 @@ from quanttradeforge.strategies.models import (
     Signal,
     SignalAction,
 )
-from quanttradeforge.strategies.tsmom import TSMOMConfig
+from quanttradeforge.strategies.tsmom import TSMOMConfig, TSMOMStrategy
 
 __all__ = [
     "PositionIntent",
@@ -14,4 +14,5 @@ __all__ = [
     "SignalAction",
     "Strategy",
     "TSMOMConfig",
+    "TSMOMStrategy",
 ]

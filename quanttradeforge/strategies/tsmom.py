@@ -3,8 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Sequence
+from decimal import Decimal
+from statistics import mean
+from typing import Final
 
 from quanttradeforge.data.enums import Timeframe
+from quanttradeforge.data.models import Bar, Instrument
+from quanttradeforge.strategies.base import Strategy
+from quanttradeforge.strategies.models import PositionIntent, Signal, SignalAction
+
+_SIMPLE_CLOSE_TO_CLOSE: Final[str] = "simple_close_to_close"
 
 
 @dataclass(frozen=True)
@@ -44,6 +53,8 @@ class TSMOMConfig:
         ):
             if getattr(self, field_name) <= 0:
                 raise ValueError(f"{field_name} must be positive")
+        if self.volatility_ddof is not None and self.volatility_ddof not in (0, 1):
+            raise ValueError("volatility_ddof must be 0 or 1")
 
     def unresolved_fields(self) -> tuple[str, ...]:
         fields = (
@@ -64,3 +75,104 @@ class TSMOMConfig:
             raise ValueError(
                 "TSMOM v0.1 has unresolved decisions: " + ", ".join(unresolved)
             )
+
+
+class TSMOMStrategy(Strategy):
+    """Initial TSMOM signal evaluator using completed bars only.
+
+    This increment implements only the entry threshold. Stops, targets,
+    reversal exits, and execution are intentionally deferred until their
+    configured policies are implemented.
+    """
+
+    def __init__(self, config: TSMOMConfig, instrument: Instrument) -> None:
+        config.require_resolved()
+        if config.momentum_formula != _SIMPLE_CLOSE_TO_CLOSE:
+            raise ValueError(
+                "TSMOMStrategy currently supports only simple_close_to_close"
+            )
+        self.config = config
+        self.instrument = instrument
+        self.strategy_id = config.strategy_id
+        self.version = config.version
+
+    def evaluate(self, bars: Sequence[Bar]) -> Signal:
+        if not bars:
+            raise ValueError("TSMOMStrategy requires at least one completed bar")
+        self._validate_bars(bars)
+        latest = bars[-1]
+        minimum_bars = max(
+            self.config.momentum_lookback + 1,
+            self.config.volatility_observations + 1,
+        )
+        if len(bars) < minimum_bars:
+            return self._hold(latest, "insufficient completed bars")
+
+        momentum = (
+            latest.close / bars[-1 - self.config.momentum_lookback].close
+        ) - Decimal("1")
+        returns = [
+            (bars[index].close / bars[index - 1].close) - Decimal("1")
+            for index in range(1, len(bars))
+        ][-self.config.volatility_observations :]
+        volatility = self._stddev(returns, self.config.volatility_ddof or 1)
+        threshold = Decimal(self.config.momentum_threshold_stddev) * volatility
+
+        if volatility == 0:
+            return self._hold(latest, "zero trailing return volatility")
+        if momentum > threshold:
+            return self._signal(
+                latest,
+                PositionIntent.LONG,
+                f"momentum {momentum} exceeded +{threshold} threshold",
+            )
+        if momentum < -threshold and self.config.short_entry_policy == "enabled":
+            return self._signal(
+                latest,
+                PositionIntent.SHORT,
+                f"momentum {momentum} exceeded -{threshold} threshold",
+            )
+        return self._hold(latest, "momentum remained inside threshold")
+
+    @staticmethod
+    def _stddev(values: Sequence[Decimal], ddof: int) -> Decimal:
+        if len(values) <= ddof:
+            return Decimal("0")
+        average = Decimal(str(mean(values)))
+        variance = sum((value - average) ** 2 for value in values) / Decimal(len(values) - ddof)
+        return variance.sqrt()
+
+    def _validate_bars(self, bars: Sequence[Bar]) -> None:
+        if any(bar.timeframe != self.config.timeframe for bar in bars):
+            raise ValueError("TSMOMStrategy received a bar with the wrong timeframe")
+        instrument_ids = {bar.instrument_id for bar in bars}
+        if len(instrument_ids) != 1:
+            raise ValueError("TSMOMStrategy requires one instrument series")
+        if self.instrument.instrument_id not in instrument_ids:
+            raise ValueError("TSMOMStrategy instrument does not match bar series")
+        timestamps = [bar.bar_open_ts for bar in bars]
+        if timestamps != sorted(timestamps):
+            raise ValueError("TSMOMStrategy requires chronological bars")
+        if any(bar.close <= 0 for bar in bars):
+            raise ValueError("TSMOMStrategy requires positive close prices")
+
+    def _hold(self, bar: Bar, reason: str) -> Signal:
+        return self._signal(bar, PositionIntent.FLAT, reason, action=SignalAction.HOLD)
+
+    def _signal(
+        self,
+        bar: Bar,
+        position_intent: PositionIntent,
+        reason: str,
+        *,
+        action: SignalAction = SignalAction.ENTER,
+    ) -> Signal:
+        return Signal(
+            timestamp=bar.bar_open_ts,
+            instrument=self.instrument,
+            strategy_id=self.strategy_id,
+            strategy_version=self.version,
+            action=action,
+            position_intent=position_intent,
+            reason=reason,
+        )
