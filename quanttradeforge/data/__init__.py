@@ -10,7 +10,14 @@ from quanttradeforge.data.enums import (
     TradingStatus,
 )
 from quanttradeforge.data.models import Bar, CorporateAction, DatasetManifest, Instrument
-from quanttradeforge.data.nse import NSEBhavcopyDataset, bhavcopy_url, download_bhavcopy, parse_bhavcopy, write_dataset
+from quanttradeforge.data.nse import (
+    NSEBhavcopyDataset,
+    bhavcopy_url,
+    download_bhavcopy,
+    load_dataset,
+    parse_bhavcopy,
+    write_dataset,
+)
 from quanttradeforge.data.quality import QualityIssue, validate_bar, validate_bar_series, validate_instrument
 
 __all__ = [
@@ -32,6 +39,7 @@ __all__ = [
     "validate_instrument",
     "bhavcopy_url",
     "download_bhavcopy",
+    "load_dataset",
     "parse_bhavcopy",
     "write_dataset",
 ]

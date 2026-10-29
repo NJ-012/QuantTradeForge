@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import csv
 import io
+import tempfile
 import unittest
 import zipfile
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 from quanttradeforge.data.enums import Timeframe
-from quanttradeforge.data.nse import bhavcopy_url, parse_bhavcopy
+from quanttradeforge.data.nse import bhavcopy_url, load_dataset, parse_bhavcopy, write_dataset
 
 
 def _archive() -> bytes:
@@ -57,6 +59,21 @@ class NSEIngestionTests(unittest.TestCase):
         self.assertEqual(dataset.bars[0].bar_open_ts.hour, 9)
         self.assertFalse(dataset.manifest.is_synthetic)
         self.assertTrue(dataset.manifest.not_for_performance)
+
+    def test_persisted_dataset_round_trips(self) -> None:
+        dataset = parse_bhavcopy(
+            _archive(),
+            session_date=date(2023, 10, 30),
+            dataset_version="sample-v1",
+            source_url="https://example.invalid/sample.zip",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            output_dir = Path(directory)
+            write_dataset(dataset, output_dir)
+            loaded = load_dataset(output_dir)
+        self.assertEqual(loaded.manifest.dataset_id, dataset.manifest.dataset_id)
+        self.assertEqual(loaded.instruments, dataset.instruments)
+        self.assertEqual(loaded.bars, dataset.bars)
 
 
 if __name__ == "__main__":

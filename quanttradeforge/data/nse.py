@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from quanttradeforge.data.enums import (
@@ -36,6 +37,10 @@ class NSEBhavcopyDataset:
     manifest: DatasetManifest
     instruments: list[Instrument]
     bars: list[Bar]
+
+
+def _read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def bhavcopy_url(session_date: date) -> str:
@@ -174,4 +179,25 @@ def write_dataset(dataset: NSEBhavcopyDataset, output_dir: Path) -> None:
     )
     (output_dir / "bars_1d.json").write_text(
         json.dumps([bar.__dict__ for bar in dataset.bars], default=str, indent=2) + "\n"
+    )
+
+
+def load_dataset(output_dir: Path) -> NSEBhavcopyDataset:
+    """Load a dataset written by :func:`write_dataset`."""
+    manifest_path = output_dir / "dataset.json"
+    instruments_path = output_dir / "instruments.json"
+    bars_path = output_dir / "bars_1d.json"
+    missing = [
+        str(path.name)
+        for path in (manifest_path, instruments_path, bars_path)
+        if not path.is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            f"dataset directory is missing required files: {', '.join(missing)}"
+        )
+    return NSEBhavcopyDataset(
+        manifest=DatasetManifest.from_dict(_read_json(manifest_path)),
+        instruments=[Instrument.from_dict(item) for item in _read_json(instruments_path)],
+        bars=[Bar.from_dict(item) for item in _read_json(bars_path)],
     )
