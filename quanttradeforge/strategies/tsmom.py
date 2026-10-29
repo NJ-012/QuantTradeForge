@@ -55,6 +55,17 @@ class TSMOMConfig:
                 raise ValueError(f"{field_name} must be positive")
         if self.volatility_ddof is not None and self.volatility_ddof not in (0, 1):
             raise ValueError("volatility_ddof must be 0 or 1")
+        for field_name in (
+            "momentum_threshold_stddev",
+            "stop_atr_multiple",
+            "target_r_multiple",
+        ):
+            try:
+                value = Decimal(getattr(self, field_name))
+            except Exception as exc:
+                raise ValueError(f"{field_name} must be a decimal number") from exc
+            if not value.is_finite() or value <= 0:
+                raise ValueError(f"{field_name} must be finite and positive")
 
     def unresolved_fields(self) -> tuple[str, ...]:
         fields = (
@@ -117,7 +128,12 @@ class TSMOMStrategy(Strategy):
             (bars[index].close / bars[index - 1].close) - Decimal("1")
             for index in range(1, len(bars))
         ][-self.config.volatility_observations :]
-        volatility = self._stddev(returns, self.config.volatility_ddof or 1)
+        volatility = self._stddev(
+            returns,
+            self.config.volatility_ddof
+            if self.config.volatility_ddof is not None
+            else 1,
+        )
         threshold = Decimal(self.config.momentum_threshold_stddev) * volatility
         atr = self._wilder_atr(bars)
 

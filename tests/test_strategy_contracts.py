@@ -97,6 +97,30 @@ class TSMOMConfigTests(unittest.TestCase):
         self.assertEqual(config.stop_atr_multiple, "1.5")
         self.assertEqual(Decimal(config.target_r_multiple), Decimal("2"))
 
+    def test_population_volatility_setting_is_preserved(self) -> None:
+        config = TSMOMConfig(
+            volatility_ddof=0,
+            momentum_formula="simple_close_to_close",
+            short_entry_policy="disabled",
+            reversal_exit_policy="exit_only",
+            atr_method="wilder",
+            gap_fill_policy="next_open",
+            eod_square_off_policy="last_regular_bar",
+            execution_policy="next_open_market",
+        )
+        self.assertEqual(config.volatility_ddof, 0)
+        population = TSMOMStrategy._stddev(
+            [Decimal("1"), Decimal("2"), Decimal("3")], 0
+        )
+        sample = TSMOMStrategy._stddev(
+            [Decimal("1"), Decimal("2"), Decimal("3")], 1
+        )
+        self.assertNotEqual(population, sample)
+
+    def test_invalid_risk_parameter_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "stop_atr_multiple"):
+            TSMOMConfig(stop_atr_multiple="0")
+
 
 class TSMOMStrategyTests(unittest.TestCase):
     def test_long_entry_uses_completed_bars_and_explicit_metadata(self) -> None:
@@ -116,6 +140,19 @@ class TSMOMStrategyTests(unittest.TestCase):
         signal = strategy.evaluate(_bars(["100"] * 21))
         self.assertEqual(signal.action, SignalAction.HOLD)
         self.assertEqual(signal.position_intent, PositionIntent.FLAT)
+
+    def test_enabled_short_entry_is_explicit(self) -> None:
+        config = _resolved_config()
+        config = TSMOMConfig(
+            **{
+                **config.__dict__,
+                "short_entry_policy": "enabled",
+            }
+        )
+        strategy = TSMOMStrategy(config, _instrument())
+        signal = strategy.evaluate(_bars(["100"] * 20 + ["90"]))
+        self.assertEqual(signal.action, SignalAction.ENTER)
+        self.assertEqual(signal.position_intent, PositionIntent.SHORT)
 
     def test_unresolved_config_cannot_construct_strategy(self) -> None:
         with self.assertRaisesRegex(ValueError, "unresolved decisions"):

@@ -74,6 +74,8 @@ Common strategy interface; preserve TSMOM v0.1; additional strategies only with 
   selected momentum and volatility conventions.
 - Implemented: Wilder ATR-derived fixed initial stop/target metadata on entry
   signals.
+- Implemented: exact configured volatility degrees-of-freedom handling,
+  numeric parameter validation, and explicit short-entry gating.
 - Outstanding: resolve TSMOM decisions, implement the strategy, add
   stop/target/exit handling, and backtest only after suitable intraday data is
   approved.

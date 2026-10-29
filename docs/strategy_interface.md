@@ -26,3 +26,9 @@ The evaluator now computes Wilder ATR from completed bars and attaches fixed
 initial stop and target distances to entry signals using the configured
 `1.5 × ATR` and `2R` values. Reversal exits, end-of-day handling, gap
 resolution, and execution are not yet implemented.
+
+The configured volatility convention is applied exactly: `volatility_ddof=0`
+uses population standard deviation and `volatility_ddof=1` uses sample
+standard deviation. Numeric threshold and risk-distance parameters must be
+finite and positive. Short entries remain disabled unless the resolved
+configuration explicitly sets `short_entry_policy="enabled"`.

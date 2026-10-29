@@ -30,6 +30,7 @@ See [docs/roadmap.md](docs/roadmap.md).
 - Phase 2 strategy contracts and an explicit unresolved-decision boundary for TSMOM v0.1
 - Initial executable TSMOM entry/hold evaluator using completed bars only
 - Configured Wilder ATR stop/target metadata on TSMOM entry signals
+- Exact population/sample volatility handling and explicit short-entry gating
 - No intraday market-data download, no broker adapters, no ML models
 
 ## Setup
