@@ -25,6 +25,7 @@ See [docs/roadmap.md](docs/roadmap.md).
 - NSE daily bhavcopy adapter, JSON persistence/loader, and one local exploratory
   sample (not committed, not for performance, and not sufficient for intraday research)
 - Cross-file dataset validation for manifest, instrument, and bar identity
+- Parser safeguards that reject malformed numeric fields and duplicate EQ symbols
 - No intraday market-data download, no broker adapters, no ML models
 
 ## Setup

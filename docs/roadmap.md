@@ -49,6 +49,8 @@ Includes market scope, trading style, risk philosophy, strategy-library goals, A
 - Implemented: normalized NSE EQ instruments and daily bars with source metadata.
 - Implemented: local JSON persistence that refuses accidental overwrite.
 - Implemented: cross-file dataset validation and a command-line validator.
+- Implemented: row-level numeric validation and duplicate-symbol rejection in
+  the NSE adapter.
 - Downloaded locally: one 30 October 2023 NSE daily sample; it is ignored by git
   and marked not-for-performance.
 - Outstanding: primary-document licensing review, 5-minute/15-minute source,
