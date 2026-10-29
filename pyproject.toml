@@ -1,0 +1,9 @@
+[project]
+name = "quanttradeforge"
+version = "0.1.0"
+description = "QuantTradeForge research platform (Phase 1 data contracts)"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["quanttradeforge*"]

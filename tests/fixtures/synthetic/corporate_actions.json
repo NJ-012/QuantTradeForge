@@ -1,0 +1,12 @@
+[
+  {
+    "instrument_id": "QTF:NSE:EQ:SYNTHA",
+    "ex_date": "2023-12-01",
+    "action_type": "split",
+    "numerator": "1",
+    "denominator": "2",
+    "cash_amount": null,
+    "currency": "INR",
+    "notes": "Synthetic split record only. Adjustment engine is not implemented. Bars in this fixture are unadjusted and do not overlap this ex-date."
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "instrument_id": "QTF:NSE:EQ:SYNTHA",
+    "exchange": "NSE",
+    "venue_symbol": "SYNTHA",
+    "isin": null,
+    "instrument_type": "EQUITY",
+    "currency": "INR",
+    "trading_status": "ACTIVE",
+    "tick_size": "0.05",
+    "lot_size": 1,
+    "segment": "EQ",
+    "listing_date": "2020-01-01",
+    "delisting_date": null,
+    "venue_token": null
+  },
+  {
+    "instrument_id": "QTF:BSE:EQ:SYNTHA",
+    "exchange": "BSE",
+    "venue_symbol": "SYNTHA",
+    "isin": null,
+    "instrument_type": "EQUITY",
+    "currency": "INR",
+    "trading_status": "ACTIVE",
+    "tick_size": "0.05",
+    "lot_size": 1,
+    "segment": "A",
+    "listing_date": "2020-01-01",
+    "delisting_date": null,
+    "venue_token": null
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "dataset_id": "qtf-synthetic-phase12",
+  "dataset_version": "0.1.0",
+  "source": "synthetic",
+  "license": "internal-synthetic-not-market-data",
+  "is_synthetic": true,
+  "not_for_performance": true,
+  "adjustment_policy": "unadjusted",
+  "bar_time_convention": "period_start",
+  "timezone": "Asia/Kolkata"
+}
