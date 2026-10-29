@@ -80,9 +80,8 @@ class TSMOMConfig:
 class TSMOMStrategy(Strategy):
     """Initial TSMOM signal evaluator using completed bars only.
 
-    This increment implements only the entry threshold. Stops, targets,
-    reversal exits, and execution are intentionally deferred until their
-    configured policies are implemented.
+    This increment implements the entry threshold and initial ATR-derived
+    risk distances. Reversal exits and execution are intentionally deferred.
     """
 
     def __init__(self, config: TSMOMConfig, instrument: Instrument) -> None:
@@ -91,6 +90,8 @@ class TSMOMStrategy(Strategy):
             raise ValueError(
                 "TSMOMStrategy currently supports only simple_close_to_close"
             )
+        if config.atr_method != "wilder":
+            raise ValueError("TSMOMStrategy currently supports only Wilder ATR")
         self.config = config
         self.instrument = instrument
         self.strategy_id = config.strategy_id
@@ -104,6 +105,7 @@ class TSMOMStrategy(Strategy):
         minimum_bars = max(
             self.config.momentum_lookback + 1,
             self.config.volatility_observations + 1,
+            self.config.atr_period + 1,
         )
         if len(bars) < minimum_bars:
             return self._hold(latest, "insufficient completed bars")
@@ -117,20 +119,31 @@ class TSMOMStrategy(Strategy):
         ][-self.config.volatility_observations :]
         volatility = self._stddev(returns, self.config.volatility_ddof or 1)
         threshold = Decimal(self.config.momentum_threshold_stddev) * volatility
+        atr = self._wilder_atr(bars)
 
         if volatility == 0:
             return self._hold(latest, "zero trailing return volatility")
+        if atr <= 0:
+            return self._hold(latest, "zero trailing true range")
         if momentum > threshold:
             return self._signal(
                 latest,
                 PositionIntent.LONG,
                 f"momentum {momentum} exceeded +{threshold} threshold",
+                stop_distance=atr * Decimal(self.config.stop_atr_multiple),
+                target_distance=atr
+                * Decimal(self.config.stop_atr_multiple)
+                * Decimal(self.config.target_r_multiple),
             )
         if momentum < -threshold and self.config.short_entry_policy == "enabled":
             return self._signal(
                 latest,
                 PositionIntent.SHORT,
                 f"momentum {momentum} exceeded -{threshold} threshold",
+                stop_distance=atr * Decimal(self.config.stop_atr_multiple),
+                target_distance=atr
+                * Decimal(self.config.stop_atr_multiple)
+                * Decimal(self.config.target_r_multiple),
             )
         return self._hold(latest, "momentum remained inside threshold")
 
@@ -141,6 +154,21 @@ class TSMOMStrategy(Strategy):
         average = Decimal(str(mean(values)))
         variance = sum((value - average) ** 2 for value in values) / Decimal(len(values) - ddof)
         return variance.sqrt()
+
+    def _wilder_atr(self, bars: Sequence[Bar]) -> Decimal:
+        true_ranges = [
+            max(
+                bar.high - bar.low,
+                abs(bar.high - bars[index - 1].close),
+                abs(bar.low - bars[index - 1].close),
+            )
+            for index, bar in enumerate(bars[1:], start=1)
+        ]
+        period = self.config.atr_period
+        atr = sum(true_ranges[:period], Decimal("0")) / Decimal(period)
+        for true_range in true_ranges[period:]:
+            atr = ((atr * Decimal(period - 1)) + true_range) / Decimal(period)
+        return atr
 
     def _validate_bars(self, bars: Sequence[Bar]) -> None:
         if any(bar.timeframe != self.config.timeframe for bar in bars):
@@ -155,6 +183,8 @@ class TSMOMStrategy(Strategy):
             raise ValueError("TSMOMStrategy requires chronological bars")
         if any(bar.close <= 0 for bar in bars):
             raise ValueError("TSMOMStrategy requires positive close prices")
+        if any(bar.high < bar.low for bar in bars):
+            raise ValueError("TSMOMStrategy requires high >= low")
 
     def _hold(self, bar: Bar, reason: str) -> Signal:
         return self._signal(bar, PositionIntent.FLAT, reason, action=SignalAction.HOLD)
@@ -166,6 +196,8 @@ class TSMOMStrategy(Strategy):
         reason: str,
         *,
         action: SignalAction = SignalAction.ENTER,
+        stop_distance: Decimal | None = None,
+        target_distance: Decimal | None = None,
     ) -> Signal:
         return Signal(
             timestamp=bar.bar_open_ts,
@@ -175,4 +207,6 @@ class TSMOMStrategy(Strategy):
             action=action,
             position_intent=position_intent,
             reason=reason,
+            stop_distance=stop_distance,
+            target_distance=target_distance,
         )

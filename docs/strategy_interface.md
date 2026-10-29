@@ -22,5 +22,7 @@ The initial evaluator now supports the explicitly configured
 `simple_close_to_close` formula and `volatility_ddof` of 0 or 1. It evaluates
 only the completed bars supplied to it, requires chronological single-instrument
 5-minute data, emits `ENTER` or `HOLD`, and refuses unresolved configurations.
-Stop/target distances, reversal exits, end-of-day handling, and execution are
-not yet implemented.
+The evaluator now computes Wilder ATR from completed bars and attaches fixed
+initial stop and target distances to entry signals using the configured
+`1.5 × ATR` and `2R` values. Reversal exits, end-of-day handling, gap
+resolution, and execution are not yet implemented.

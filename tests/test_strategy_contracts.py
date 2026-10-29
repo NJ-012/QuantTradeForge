@@ -32,8 +32,8 @@ def _bars(closes: list[str]) -> list[Bar]:
             bar_open_ts=start + timedelta(minutes=5 * index),
             timeframe="5m",
             open=close,
-            high=close,
-            low=close,
+            high=str(Decimal(close) + Decimal("1")),
+            low=str(Decimal(close) - Decimal("1")),
             close=close,
             volume="1000",
             session_date=date(2023, 10, 30),
@@ -107,6 +107,9 @@ class TSMOMStrategyTests(unittest.TestCase):
         self.assertEqual(signal.position_intent, PositionIntent.LONG)
         self.assertEqual(signal.timestamp, bars[-1].bar_open_ts)
         self.assertEqual(signal.instrument.instrument_id, "QTF:NSE:EQ:ABC")
+        self.assertIsNotNone(signal.stop_distance)
+        self.assertIsNotNone(signal.target_distance)
+        self.assertEqual(signal.target_distance, signal.stop_distance * Decimal("2"))
 
     def test_zero_volatility_is_hold(self) -> None:
         strategy = TSMOMStrategy(_resolved_config(), _instrument())

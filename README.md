@@ -29,6 +29,7 @@ See [docs/roadmap.md](docs/roadmap.md).
 - Parser safeguards that reject malformed numeric fields and duplicate EQ symbols
 - Phase 2 strategy contracts and an explicit unresolved-decision boundary for TSMOM v0.1
 - Initial executable TSMOM entry/hold evaluator using completed bars only
+- Configured Wilder ATR stop/target metadata on TSMOM entry signals
 - No intraday market-data download, no broker adapters, no ML models
 
 ## Setup
@@ -62,8 +63,9 @@ The current sample is daily only. It does not satisfy the required 5-minute
 and 15-minute intraday data requirements. Do not install NumPy, Polars,
 databases, or ML libraries until a later phase needs them.
 
-Phase 2 currently contains contracts and an initial TSMOM entry/hold evaluator.
-Stops, exits, backtesting, and validation are not implemented. See
+Phase 2 currently contains contracts and an initial TSMOM entry/hold evaluator
+with ATR-derived risk metadata. Exits, backtesting, and validation are not
+implemented. See
 [docs/strategy_interface.md](docs/strategy_interface.md).
 
 ## Configuration and secrets
