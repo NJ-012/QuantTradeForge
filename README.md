@@ -24,6 +24,7 @@ See [docs/roadmap.md](docs/roadmap.md).
 - Preserved TSMOM v0.1 **research specification** (not implemented, not backtested)
 - NSE daily bhavcopy adapter, JSON persistence/loader, and one local exploratory
   sample (not committed, not for performance, and not sufficient for intraday research)
+- Cross-file dataset validation for manifest, instrument, and bar identity
 - No intraday market-data download, no broker adapters, no ML models
 
 ## Setup
@@ -43,6 +44,15 @@ python -m scripts.download_nse_bhavcopy --date 2023-10-30 --output data/local/ns
 The output is intentionally ignored by git. The loader can reopen the
 normalized files with `quanttradeforge.data.nse.load_dataset`. Review the
 source terms before sharing or using the sample for research claims.
+
+Validate a persisted sample before using it:
+
+```text
+python -m scripts.validate_dataset data/local/nse_bhavcopy_2023-10-30
+```
+
+The command reports errors and warnings and exits non-zero when blocking
+integrity errors are found.
 
 The current sample is daily only. It does not satisfy the required 5-minute
 and 15-minute intraday data requirements. Do not install NumPy, Polars,

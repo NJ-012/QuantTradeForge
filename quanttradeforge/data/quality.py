@@ -8,7 +8,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Sequence
 
 from quanttradeforge.data.enums import IssueSeverity, Timeframe
-from quanttradeforge.data.models import Bar, Instrument
+from quanttradeforge.data.models import Bar, DatasetManifest, Instrument
 from quanttradeforge.data.session import session_bar_opens
 
 ERROR = IssueSeverity.ERROR
@@ -242,3 +242,76 @@ def validate_bar_series(
 def sort_bars(bars: Sequence[Bar]) -> list[Bar]:
     """Return a new list sorted by (instrument_id, bar_open_ts). Does not drop duplicates."""
     return sorted(bars, key=lambda bar: (bar.instrument_id, bar.bar_open_ts))
+
+
+def validate_dataset(
+    manifest: DatasetManifest,
+    instruments: Sequence[Instrument],
+    bars: Sequence[Bar],
+) -> list[QualityIssue]:
+    """Validate cross-file identity and quality for a normalized dataset."""
+    issues: list[QualityIssue] = []
+    instrument_map: dict[str, Instrument] = {}
+    for instrument in instruments:
+        if instrument.instrument_id in instrument_map:
+            issues.append(
+                QualityIssue(
+                    "DUPLICATE_INSTRUMENT",
+                    "instrument_id appears more than once in the instrument file",
+                    ERROR,
+                    instrument.instrument_id,
+                )
+            )
+        instrument_map[instrument.instrument_id] = instrument
+        issues.extend(validate_instrument(instrument))
+
+    if not instruments:
+        issues.append(QualityIssue("EMPTY_INSTRUMENTS", "dataset has no instruments", ERROR))
+    if not bars:
+        issues.append(QualityIssue("EMPTY_BARS", "dataset has no bars", ERROR))
+
+    grouped: dict[str, list[Bar]] = {}
+    for bar in bars:
+        grouped.setdefault(bar.instrument_id, []).append(bar)
+        if bar.dataset_version != manifest.dataset_version:
+            issues.append(
+                QualityIssue(
+                    "DATASET_VERSION_MISMATCH",
+                    "bar dataset_version differs from manifest",
+                    ERROR,
+                    bar.instrument_id,
+                    bar.bar_open_ts,
+                )
+            )
+        if bar.instrument_id not in instrument_map:
+            issues.append(
+                QualityIssue(
+                    "UNKNOWN_INSTRUMENT",
+                    "bar refers to an instrument absent from the instrument file",
+                    ERROR,
+                    bar.instrument_id,
+                    bar.bar_open_ts,
+                )
+            )
+
+    for instrument_id, series in grouped.items():
+        issues.extend(
+            validate_bar_series(
+                series,
+                instrument=instrument_map.get(instrument_id),
+                expected_timeframe=series[0].timeframe,
+                check_session_gaps=False,
+            )
+        )
+
+    missing_instruments = set(instrument_map) - set(grouped)
+    for instrument_id in sorted(missing_instruments):
+        issues.append(
+            QualityIssue(
+                "INSTRUMENT_WITHOUT_BARS",
+                "instrument has no corresponding bars in the dataset",
+                WARNING,
+                instrument_id,
+            )
+        )
+    return issues

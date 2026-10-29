@@ -18,7 +18,13 @@ from quanttradeforge.data.nse import (
     parse_bhavcopy,
     write_dataset,
 )
-from quanttradeforge.data.quality import QualityIssue, validate_bar, validate_bar_series, validate_instrument
+from quanttradeforge.data.quality import (
+    QualityIssue,
+    validate_bar,
+    validate_bar_series,
+    validate_dataset,
+    validate_instrument,
+)
 
 __all__ = [
     "AdjustmentPolicy",
@@ -36,6 +42,7 @@ __all__ = [
     "TradingStatus",
     "validate_bar",
     "validate_bar_series",
+    "validate_dataset",
     "validate_instrument",
     "bhavcopy_url",
     "download_bhavcopy",

@@ -48,6 +48,7 @@ Includes market scope, trading style, risk philosophy, strategy-library goals, A
 - Implemented: official NSE daily bhavcopy URL construction and ZIP/CSV parsing.
 - Implemented: normalized NSE EQ instruments and daily bars with source metadata.
 - Implemented: local JSON persistence that refuses accidental overwrite.
+- Implemented: cross-file dataset validation and a command-line validator.
 - Downloaded locally: one 30 October 2023 NSE daily sample; it is ignored by git
   and marked not-for-performance.
 - Outstanding: primary-document licensing review, 5-minute/15-minute source,
