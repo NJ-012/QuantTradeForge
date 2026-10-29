@@ -9,20 +9,22 @@ This is **not** a live trading bot. Live order submission is forbidden unless yo
 | Phase | Status |
 | ----- | ------ |
 | 0 System definition | Recorded in `docs/` (planning-level; not a running system) |
-| 1 Market data infrastructure | **In progress** — 1.1–1.2 implemented/tested; 1.3 daily NSE adapter and local sample implemented/tested |
-| 2 Strategy contracts | **In progress** — common signal contract and TSMOM configuration boundary added |
+| 1 Market data infrastructure | **In progress** — schemas, quality checks, and bounded NSE daily adapter tested; approved intraday source still open |
+| 2 Strategy library | **In progress** — signal contracts and executable TSMOM entry/hold evaluator tested |
 | 3+ Backtest, ML, risk, execution | Planned — not started |
 
 Status vocabulary used in this repo: **Planned**, **In progress**, **Implemented**, **Tested**, **Validated**, **Approved for deployment**. These are not interchangeable. Passing a documentation test is not validation of a strategy.
 
 See [docs/roadmap.md](docs/roadmap.md).
 
-## What exists in Phase 1.3
+## Current implementation
 
 - Architecture, decisions, data requirements, and schema notes under `docs/`
 - `quanttradeforge.data`: instrument/bar/CA models and quality checks
 - Labelled **synthetic** JSON fixtures (not market data, not for performance)
-- Preserved TSMOM v0.1 **research specification** (not implemented, not backtested)
+- Preserved TSMOM v0.1 research specification; entry/hold evaluation is
+  implemented for explicitly resolved configuration, but not backtested or
+  validated
 - NSE daily bhavcopy adapter, JSON persistence/loader, and one local exploratory
   sample (not committed, not for performance, and not sufficient for intraday research)
 - Cross-file dataset validation for manifest, instrument, and bar identity
@@ -65,9 +67,12 @@ and 15-minute intraday data requirements. Do not install NumPy, Polars,
 databases, or ML libraries until a later phase needs them.
 
 Phase 2 currently contains contracts and an initial TSMOM entry/hold evaluator
-with ATR-derived risk metadata. Exits, backtesting, and validation are not
-implemented. See
+with ATR-derived risk metadata. Reversal exits, end-of-day square-off,
+execution, backtesting, and research validation are not implemented. See
 [docs/strategy_interface.md](docs/strategy_interface.md).
+
+The latest test run covers **43 tests**. Passing tests establish software
+behavior only; they do not establish profitability or deployment readiness.
 
 ## Configuration and secrets
 
